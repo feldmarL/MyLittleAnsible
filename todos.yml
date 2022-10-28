@@ -1,0 +1,15 @@
+# - module: copy
+#   params:
+#     src: Vagrantfile
+#     dest: /home/mla/
+#     backup: true
+
+- module: apt
+  params:
+    name: "nginx-common"
+    state: present
+
+- module: apt
+  params:
+    name: "emacs-nox"
+    state: present

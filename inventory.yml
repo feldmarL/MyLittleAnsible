@@ -1,0 +1,7 @@
+hosts:
+    vagrant:
+        ssh_address: 127.0.0.1
+        ssh_port: 2222
+        ssh_user: mla
+        ssh_password: password_mla
+        #ssh_key_file: mla_key
