@@ -1,10 +1,15 @@
-from sys import stdout
-from click import command, option
-from logging import Formatter, FileHandler, StreamHandler, getLogger, INFO, DEBUG, ERROR
+"""
+Entry point of MyLittleAnsible project.
+"""
 
-from .my_dataclasses.populate_dataclasses import populate_todo, populate_host
+from logging import (DEBUG, ERROR, INFO, FileHandler, Formatter, StreamHandler,
+                     getLogger)
+from sys import stdout
+
+from click import command, option
 
 from .module_execution.execute_todos import execution
+from .my_dataclasses.populate_dataclasses import populate_host, populate_todo
 
 formatter = Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
@@ -22,12 +27,12 @@ logger.addHandler(stderr_handler)
 logger.addHandler(stdout_handler)
 
 @command()
-@option("-f", "--todos_file_path", show_default=True, default="todos.yml", help="Todos file. (default: todos.yml)")
-@option("-i", "--inventory", show_default=True, default="inventory.yml", help="Inventory file. (default: inventory.yml)")
-@option("--debug", is_flag=True, show_default=True, default=False, help="Debug mode. (default: False)")
-@option("--dry-run", is_flag=True, show_default=True, default=False, help="Dry-run mode. (default: False)")
+@option("-f", "--todos_file_path", show_default=True, default="todos.yml", help="Todos file.")
+@option("-i", "--inventory", show_default=True, default="inventory.yml", help="Inventory file.")
+@option("--debug", is_flag=True, show_default=True, default=False, help="Debug mode.")
+@option("--dry-run", is_flag=True, show_default=True, default=False, help="Dry-run mode.")
 def cmd_interpreter(todos_file_path, inventory, debug, dry_run):
-    """Main
+    """ Entry point to main program.
 
     Args:
         todos_file_path (string): Path to todos file, default: todos.yml.
@@ -35,17 +40,20 @@ def cmd_interpreter(todos_file_path, inventory, debug, dry_run):
         debug (bool): Option to launch project in debug mode.
         dry_run (bool): Option to launch project in dry_run mode.
     """
-    logger.setLevel(DEBUG)
-    
+    logger.setLevel(INFO)
+
     if debug:
         logger.debug("Activated print of stack traces.")
-    
-    todos = populate_todo(todos_file_path)
+        logger.setLevel(DEBUG)
+    if dry_run:
+        pass
+
+    todos = populate_todo(todos_file_path, logger)
     logger.info("Todos file parsed.")
     logger.info(f"Total of todos to be executed: {len(todos)}")
-    
-    hosts = populate_host(inventory)
+
+    hosts = populate_host(inventory, logger)
     logger.info("Inventory file parsed.")
-    
-    for host in hosts:  
+
+    for host in hosts:
         execution(host, todos, logger)

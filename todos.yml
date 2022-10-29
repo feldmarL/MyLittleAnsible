@@ -4,12 +4,17 @@
 #     dest: /home/mla/
 #     backup: true
 
-- module: apt
-  params:
-    name: "nginx-common"
-    state: present
+# - module: apt
+#   params:
+#     name: "nginx-common"
+#     state: present
 
-- module: apt
+# - module: apt
+#   params:
+#     name: "emacs-nox"
+#     state: present
+
+- module: service
   params:
-    name: "emacs-nox"
-    state: present
+    name: docker
+    state: enabled

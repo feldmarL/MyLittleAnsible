@@ -1,12 +1,15 @@
+"""
+Python module to open todos and inventory file and populate a list of
+Host and Todo which are dataclasses defined in data_classes.py.
+"""
+
 from os import path
-from logging import getLogger
 
-from .data_classes import Todo, Host
-from yaml import load, FullLoader, YAMLError
+from yaml import FullLoader, YAMLError, load
 
-logger = getLogger(__name__)
+from .data_classes import Host, Todo
 
-def populate_todo(todos_file_path):
+def populate_todo(todos_file_path, logger):
     """Populate todo from todos file.
 
     Args:
@@ -18,7 +21,7 @@ def populate_todo(todos_file_path):
     todos: list[Todo] = []
     try:
         if path.isfile(todos_file_path):
-            with open(todos_file_path, "r") as todos_file:
+            with open(todos_file_path, "r", encoding="utf-8") as todos_file:
                 todos_file = load(todos_file, Loader=FullLoader)
                 for todo in todos_file:
                     todos.append(Todo(todo["module"], todo["params"]))
@@ -28,7 +31,7 @@ def populate_todo(todos_file_path):
         logger.error("Error occured while parsing yaml todos file.")
     return todos
 
-def populate_host(inventory_file):
+def populate_host(inventory_file, logger):
     """Populate hodt from inventory file.
 
     Args:
@@ -40,7 +43,7 @@ def populate_host(inventory_file):
     hosts: list[Host] = []
     try:
         if path.isfile(inventory_file):
-            with open(inventory_file, "r") as file:
+            with open(inventory_file, "r", encoding="utf-8") as file:
                 inventory = load(file, Loader=FullLoader)
                 for host, params in inventory["hosts"].items():
                     current_host = Host(host, params["ssh_address"], params["ssh_port"])
