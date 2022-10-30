@@ -3,25 +3,34 @@ Tools used in multiple modules.
 """
 
 from sys import stdout
+from logging import (DEBUG, INFO, WARNING, ERROR, Formatter, StreamHandler, getLogger)
 
-from logging import (DEBUG, ERROR, FileHandler, Formatter, StreamHandler, getLogger)
+class CustomFormatter(Formatter):
+    """Logging colored formatter
+    """
 
-formatter = Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    grey = "\x1b[38;20m"
+    yellow = "\x1b[33;20m"
+    red = "\x1b[31;20m"
+    blue = "\x1b[38;5;39m"
+    reset = "\x1b[0m"
 
-stderr_handler = FileHandler("stderr.log")
-stderr_handler.setLevel(ERROR)
-stderr_handler.setFormatter(formatter)
+    def __init__(self, fmt):
+        super().__init__()
+        self.fmt = fmt
+        self.formats = {
+            DEBUG: self.blue + self.fmt + self.reset,
+            INFO: self.grey + self.fmt + self.reset,
+            WARNING: self.yellow + self.fmt + self.reset,
+            ERROR: self.red + self.fmt + self.reset,
+        }
 
-stdout_handler = StreamHandler(stdout)
-stdout_handler.setLevel(DEBUG)
-stdout_handler.setFormatter(formatter)
+    def format(self, record):
+        log_fmt = self.formats.get(record.levelno)
+        formatter = Formatter(log_fmt)
+        return formatter.format(record)
 
-logger = getLogger(__name__)
-logger.setLevel(DEBUG)
-logger.addHandler(stderr_handler)
-logger.addHandler(stdout_handler)
-
-def execute_command(sudo, client, host_pwd, command):
+def execute_command(sudo, client, command, host_pwd=""):
     """_summary_
 
     Args:
@@ -35,10 +44,10 @@ def execute_command(sudo, client, host_pwd, command):
     """
     if sudo:
         stdin, stdout_channel, stderr = client.exec_command(f'echo "{host_pwd}" | {command}')
-        logger.debug(f"Execute commande {command} WITH sudo.")
+        logger.debug(f'Execute command "{command}" WITH sudo.\n')
     else:
         stdin, stdout_channel, stderr = client.exec_command(f'{command}')
-        logger.debug(f"Execute commande {command} WITHOUT sudo.")
+        logger.debug(f'Execute command "{command}" WITHOUT sudo.\n')
 
     stdout_str = stdout_channel.read().decode()
     stderr_str = stderr.read().decode()
@@ -58,3 +67,12 @@ def close_std(stdin, stdout_channel, stderr):
     stdin.close()
     stdout_channel.close()
     stderr.close()
+
+logger = getLogger(__name__)
+logger.setLevel(DEBUG)
+
+stdout_handler = StreamHandler(stdout)
+stdout_handler.setLevel(DEBUG)
+stdout_handler.setFormatter(CustomFormatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+
+logger.addHandler(stdout_handler)

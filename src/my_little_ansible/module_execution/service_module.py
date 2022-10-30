@@ -2,60 +2,66 @@
 Python module to execute service module defined in todos file.
 """
 
-from .tools import execute_command
+from .tools import execute_command, logger
 
-def set_variables(params):
+SYSTEMD: str
+ACTION: str
+PASSWORD: str
+IP: str
+
+def set_variables(params, host_pwd, host_ip):
     """ Set variable and return it based on params.
 
     Args:
         params (list(String)): List of todo params from todos file.
-
-    Returns:
-        systemd, action (String, String): Tuple of strings to describe system and action to do.
+        host_pwd (String): User's password on remote host.
+        host_ip (String): Remote host ip.
     """
-    systemd = params["name"]
+    global SYSTEMD, ACTION, PASSWORD, IP
+    SYSTEMD = params["name"]
     match params["state"]:
         case "started":
-            action = "start"
+            ACTION = "start"
         case "restarted":
-            action = "restart"
+            ACTION = "restart"
         case "stopped":
-            action = "stop"
+            ACTION = "stop"
         case "enabled":
-            action = "enable"
+            ACTION = "enable"
         case "disabled":
-            action = "disable"
-    return systemd, action
+            ACTION = "disable"
+    PASSWORD = host_pwd
+    IP = host_ip
 
-def check_execution(systemd, action, client, host_pwd):
+def check_execution(client):
     """Check module execution for idempotence and end execution verification.
 
     Args:
-        systemd (String): Service to check.
-        action (String): Action requested by user defined in todo params from todos file.
         client (SSHClient): Paramiko's SSH Client used to connect to host.
-        host_pwd (String): User's password on remote host.
 
     Returns:
         (bool, String): Execution state.
     """
-    command = f"sudo -S systemctl is-active {systemd}"
-    _, stdout, _ = execute_command(True, client, host_pwd, command)
+    command = f"sudo -S systemctl is-active {SYSTEMD}"
+    stdout, _ = execute_command(True, client, command, host_pwd=PASSWORD)
     execution_state = stdout[:-1]
 
-    match action:
+    match ACTION:
         case "start":
+            if "active" == execution_state:
+                return True, execution_state
+        case "restart":
             if "active" == execution_state:
                 return True, execution_state
         case "stop":
             if "inactive" == execution_state:
                 return True, execution_state
 
-    command = f"sudo -S systemctl is-enabled {systemd}"
-    _, stdout, _ = execute_command(True, client, host_pwd, command)
+    command = f"sudo -S systemctl is-enabled {SYSTEMD}"
+    stdout, _ = execute_command(True, client, command, host_pwd=PASSWORD)
     execution_state = stdout[:-1]
 
-    match action:
+    match ACTION:
         case "enable":
             if "enabled" == execution_state:
                 return True, execution_state
@@ -65,26 +71,25 @@ def check_execution(systemd, action, client, host_pwd):
 
     return False, execution_state
 
-def execute(systemd, action, client, host_pwd):
+def execute(client):
     """Execute action for systemd on host.
 
     Args:
-        systemd (String): Service's name.
-        action (String): Action to execute.
         client (SSHClient): Paramiko's SSH Client used to connect to host.
-        host_pwd (String): User's password on remote host.
     """
-    command = f"sudo -S systemctl {action} {systemd}"
-    _, _, stderr = execute_command(True, client, host_pwd, command)
+    command = f"sudo -S systemctl {ACTION} {SYSTEMD}"
+    _, stderr = execute_command(True, client, command, host_pwd=PASSWORD)
 
     if "incorrect" in stderr:
+        logger.info(f"Incorrect password provided in inventory file for {IP}. "
+            f"service module can't be executed without sudo password.")
+        logger.error(f"No password were provided in inventory file for {IP}. "
+                     f"service module can't be executed without sudo password.")
         return False, "incorrect"
 
-    if action == "restart":
-        action = "start"
-    return check_execution(systemd, action, client, host_pwd)
+    return check_execution(client)
 
-def service(client, params, host_pwd, host_ip, logger):
+def service(client, params, host_pwd, host_ip):
     """ Service module entry point.
 
     Args:
@@ -92,32 +97,27 @@ def service(client, params, host_pwd, host_ip, logger):
         params (list(String)): List of parameters about package defined in todos file.
         host_pwd (String): User's password on remote host.
         host_ip (int): Host ip on which execute action.
-        logger (Logger): The main created logger to log.
 
     Returns:
         String: Execution state.
     """
-    systemd, action = set_variables(params)
-    state, execution_state = check_execution(systemd, action, client, host_pwd)
+    set_variables(params, host_pwd, host_ip)
+    state, execution_state = (False, "")
+    if ACTION != "restart":
+        state, execution_state = check_execution(client)
 
     if "failed" in execution_state:
-        logger.debug(f"{systemd} initial state on {host_ip} is FAILED.")
+        logger.debug(f"{SYSTEMD} initial state on {IP} is FAILED.")
 
     if state:
         return "ok"
 
-    execution, execution_state = execute(systemd, action, client, host_pwd)
-    if not execution and "incorrect" == execution_state:
-        logger.info(f"Incorrect password provided in inventory file for {host_ip}. "
-                    f"service module can't be executed without sudo password.")
-        logger.error(f"No password were provided in inventory file for {host_ip}. "
-                     f"service module can't be executed without sudo password.")
-        return "ko"
+    execution, execution_state = execute(client)
 
-    if not execution:
-        logger.info(f"A problem occured when executing {action} for {systemd} on {host_ip}. "
+    if not execution and execution_state != "incorrect":
+        logger.info(f"A problem occured when executing {ACTION} for {SYSTEMD} on {IP}. "
                     f"Current state is {execution_state}")
-        logger.error(f"A problem occured when executing {action} for {systemd} on {host_ip}. "
+        logger.error(f"A problem occured when executing {ACTION} for {SYSTEMD} on {IP}. "
                      f"Current state is {execution_state}")
         return "ko"
 

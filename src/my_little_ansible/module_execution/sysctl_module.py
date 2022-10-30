@@ -32,7 +32,7 @@ def check_execution_np(client):
         (bool, String): Execution state.
     """
     command = f"sudo -S sysctl -n {ATTRIBUTE}"
-    stdout, _ = execute_command(True, client, PASSWORD, command)
+    stdout, _ = execute_command(True, client, command, host_pwd=PASSWORD)
     effective_value = stdout[:-1]
 
     if effective_value == VALUE:
@@ -49,7 +49,7 @@ def check_execution_p(client):
         (bool, String): Execution state.
     """
     command = f'cat /etc/sysctl.conf | grep {ATTRIBUTE} | cut -d "=" -f2'
-    stdout, _ = execute_command(False, client, PASSWORD, command)
+    stdout, _ = execute_command(False, client, command)
     file_value = stdout[:-1]
 
     state, effective_value = check_execution_np(client)
@@ -69,17 +69,17 @@ def execute_change(client):
     """
     if not PERMANENT:
         command = f'sudo -S sysctl -w {ATTRIBUTE}={VALUE}'
-        _, _ = execute_command(True, client, PASSWORD, command)
+        _, _ = execute_command(True, client, command, host_pwd=PASSWORD)
         return check_execution_np(client)
 
     state, _, _ = check_execution_p(client)
 
     if not state:
         command = f'sudo -S echo {ATTRIBUTE}={VALUE} >> /etc/sysctl.conf'
-        _, _ = execute_command(True, client, PASSWORD, command)
+        _, _ = execute_command(True, client, command, host_pwd=PASSWORD)
 
     command = "sudo -S sysctl -p"
-    _, _ = execute_command(True, client, PASSWORD, command)
+    _, _ = execute_command(True, client, command, host_pwd=PASSWORD)
     state, effective_value = check_execution_np(client)
     return state, effective_value
 
@@ -109,8 +109,12 @@ def sysctl(client, params, host_pwd, host_ip):
                          f"Currently defined in /etc/sysctl.conf file: {file_value}")
     if state:
         return "ok"
+
     state, effective_value = execute_change(client)
+
     if state:
         return "changed"
+
     logger.debug(f"{ATTRIBUTE}={VALUE} FAILED on {host_ip}, current: {effective_value}")
+
     return "ko"

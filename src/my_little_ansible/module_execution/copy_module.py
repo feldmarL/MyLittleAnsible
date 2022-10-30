@@ -5,7 +5,7 @@ from os import listdir, path
 
 from paramiko import SFTPClient
 
-#common.logging.basicConfig(level=common.DEBUG)
+from .tools import execute_command, logger
 
 def mkdir_p(sftp, remote_directory):
     """ Recursively generate directory if doesn't exist on remote host.
@@ -47,13 +47,12 @@ def put_dir(sftp, src, dest):
             mkdir_p(sftp, f"{dest}/{item}")
             put_dir(sftp, item_path, dest)
 
-def copy(client, params, logger):
+def copy(client, params, host_user, host_pwd):
     """Copy module entry point.
 
     Args:
         client (SSHClient): Paramiko's SSH Client used to connect to host.
         params (list(String)): List of parameters about package defined in todos file.
-        logger (Logger): The main created logger to log.
 
     Returns:
         String: Execution state.
@@ -63,12 +62,16 @@ def copy(client, params, logger):
 
     sftp = SFTPClient.from_transport(client.get_transport())
     mkdir_p(sftp, dest)
+    command = f"sudo -S chown {host_user}:{host_user} -R {dest}"
+    _, _ = execute_command(True, client, command, host_pwd=host_pwd)
+
 
     if path.isdir(src):
         put_dir(sftp, src, dest)
     elif path.isfile(src):
+        logger.debug(f"put {src} on {dest}")
         sftp.put(src, dest)
 
-    logger.debug("When you'll be able to read this line, cry. Cry because you surely succeeded.")
+    logger.debug("I you're able to read this line, cry. Cry because you surely succeeded.")
 
     return "changed"

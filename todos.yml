@@ -11,16 +11,27 @@
 
 # - module: apt
 #   params:
-#     name: "emacs-nox"
+#     name: "docker.io"
 #     state: present
 
 # - module: service
 #   params:
 #     name: docker
-#     state: enabled
+#     state: disabled
 
-- module: sysctl
+# - module: service
+#   params:
+#     name: docker
+#     state: stopped
+
+# - module: sysctl
+#   params:
+#     attribute: "net.core.somaxconn"
+#     value: 4096
+#     permanent: false
+
+- module: command
   params:
-    attribute: "net.core.somaxconn"
-    value: 8192
-    permanent: true
+    command: |
+      echo "test" > /tmp/dummy-file
+      cat /tmp/dummy-file

@@ -13,6 +13,7 @@ from .apt_module import apt
 from .copy_module import copy
 from .service_module import service
 from .sysctl_module import sysctl
+from .command_module import command
 
 def ssh_conn(host):
     """ Initiate SSH connexion with specified host.
@@ -24,7 +25,7 @@ def ssh_conn(host):
         SSHClient: The SSH client we need to use to send commands to distant host.
     """
     key_path = path.abspath(host.ssh_private_key_path)
-    logger.info(f"key_path: {key_path}")
+    logger.info(f"key_path: {key_path}\n")
     if path.isfile(key_path):
         key = RSAKey.from_private_key_file(key_path)
     client = SSHClient()
@@ -34,11 +35,11 @@ def ssh_conn(host):
 
     try:
         if host.auth:
-            logger.debug("Trying to connect using password.")
+            logger.debug("Trying to connect using password.\n")
             client.connect(host.ip, host.port, host.ssh_user, host.ssh_password)
             state = True
         else:
-            logger.debug("Trying to connect using pkey.")
+            logger.debug("Trying to connect using pkey.\n")
             client.connect(host.ip, host.port, host.ssh_user, pkey = key)
             state = True
     except BadHostKeyException:
@@ -76,14 +77,19 @@ def execution(host, todos):
     for index, todo in enumerate(todos):
         match todo.module:
             case "copy":
-                status = copy(client, todo.params, logger)
+                status = copy(client, todo.params, host.ssh_user, host.ssh_password)
             case "apt":
-                status = apt(client, todo.params, host.ssh_password, host.ip, logger)
+                status = apt(client, todo.params, host.ssh_password, host.ip)
             case "service":
-                status = service(client, todo.params, host.ssh_password, host.ip, logger)
+                status = service(client, todo.params, host.ssh_password, host.ip)
             case "sysctl":
                 status = sysctl(client, todo.params, host.ssh_password, host.ip)
+            case "command":
+                status = command(client, todo.params, host.ip)
+            case _:
+                logger.error(f"Unrecognized module {todo.module}, skipping.")
+                return
 
-        logger.info(f"Done todo {index}, module: {todo.module} on {host.ip}: {status.upper()}")
+        logger.info(f"Done todo {index}, module: {todo.module} on {host.ip}: {status.upper()}\n")
 
     client.close()

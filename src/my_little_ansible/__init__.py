@@ -35,10 +35,10 @@ def cmd_interpreter(todos_file_path, inventory, debug, dry_run):
 
     todos = populate_todo(todos_file_path, logger)
     logger.info("Todos file parsed.")
-    logger.info(f"Total of todos to be executed: {len(todos)}")
+    logger.info(f"Total of todos to be executed: {len(todos)}.")
 
     hosts = populate_host(inventory, logger)
-    logger.info("Inventory file parsed.")
+    logger.info("Inventory file parsed.\n")
 
     for host in hosts:
         execution(host, todos)

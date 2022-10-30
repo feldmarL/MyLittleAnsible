@@ -2,9 +2,12 @@
 Python module to execute apt module defined in todos file.
 """
 
-from .tools import close_std
+from .tools import execute_command, logger
 
-def set_variables_and_check_ok(params, client, host_ip, logger):
+PACKAGE: str
+ACTION: str
+
+def set_variables_and_check_ok(params, client, host_ip):
     """ Set variables from received parameters and check if
         the action is already done and return state + variables.
 
@@ -18,29 +21,31 @@ def set_variables_and_check_ok(params, client, host_ip, logger):
         state, action, package (String, String, String):
             Execution state, action to do and package on which action to do.
     """
-    package = params["name"]
+    global PACKAGE, ACTION
+    PACKAGE = params["name"]
     if params["state"] == "present":
-        action = "install"
+        ACTION = "install"
     elif params["state"] == "absent":
-        action = "remove"
+        ACTION = "remove"
 
-    stdin, stdout, stderr = client.exec_command(f'dpkg -s {package} | grep "Status"')
-    if action == "install":
-        if "ok installed" in stdout.read().decode():
-            logger.info(f"{package} already installed on {host_ip}. Todos DONE with status OK.")
-            close_std(stdin, stdout, stderr)
-            return "ok", action, package
+    command = f'dpkg -s {PACKAGE} | grep "Status"'
+    stdout, _ = execute_command(False, client, command)
 
-    elif action == "remove":
-        if not "ok installed" in stdout.read().decode():
-            logger.info(f"{package} already uninstalled on {host_ip}. Todos DONE with status OK.")
-            close_std(stdin, stdout, stderr)
-            return "ok", action, package
+    logger.debug(f"{PACKAGE} state on {host_ip}: {stdout}")
 
-    close_std(stdin, stdout, stderr)
-    return "to change", action, package
+    if ACTION == "install":
+        if "ok installed" in stdout:
+            logger.info(f"{PACKAGE} already installed on {host_ip}. Todos DONE with status OK.")
+            return "ok"
 
-def apt(client, params, host_pwd, host_ip, logger):
+    elif ACTION == "remove":
+        if not "ok installed" in stdout:
+            logger.info(f"{PACKAGE} already uninstalled on {host_ip}. Todos DONE with status OK.")
+            return "ok"
+
+    return "to change"
+
+def apt(client, params, host_pwd, host_ip):
     """ Module's entry point.
 
     Args:
@@ -53,24 +58,27 @@ def apt(client, params, host_pwd, host_ip, logger):
     Returns:
         String: Execution state.
     """
-    stdin, stdout, stderr = client.exec_command(f'echo "{host_pwd}" | sudo -S apt-get update')
-    if "incorrect" in stderr.read().decode():
-        logger.info(f"Incorrect password provided in inventory file for {host_ip}. "
+    command = f'echo "{host_pwd}" | sudo -S apt-get update'
+    _, stderr = execute_command(True, client, command, host_pwd=host_pwd)
+
+    if "incorrect" in stderr:
+        logger.warning(f"Incorrect password provided in inventory file for {host_ip}. "
                     f"apt module can't be executed without sudo password.")
         logger.error(f"No password were provided in inventory file for {host_ip}. "
                      f"apt module can't be executed without sudo password.")
         return "ko"
-    close_std(stdin, stdout, stderr)
-
-    state, action, package = set_variables_and_check_ok(params, client, host_ip, logger)
+    state = set_variables_and_check_ok(params, client, host_ip)
 
     if state == "ok":
         return state
 
-    stdin, stdout, stderr = client.exec_command(f'echo "{host_pwd}" | \
-                                                sudo -S apt-get -y {action} {package}')
+    command = (f'echo "{host_pwd}" | sudo -S apt-get -y {ACTION} {PACKAGE}')
+    stdout, stderr = execute_command(True, client, command, host_pwd=host_pwd)
 
-    logger.debug(f"While trying to {action} {package}, STDOUT:\n{stdout.read().decode()}")
-    logger.error(f"While trying to {action} {package}, STDERR:\n{stderr.read().decode()}")
-    close_std(stdin, stdout, stderr)
+    logger.debug(f"While trying to {ACTION} {PACKAGE}, STDOUT:\n{stdout}")
+
+    if stderr != "" and "dpkg-preconfigure: unable to re-open stdin:" not in stderr:
+        logger.error(f"While trying to {ACTION} {PACKAGE}, STDERR:\n{stderr}")
+        return "ko"
+
     return "changed"
