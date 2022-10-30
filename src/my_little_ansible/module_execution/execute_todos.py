@@ -6,13 +6,15 @@ from os import path
 from socket import error as SocketError
 
 from paramiko import (AuthenticationException, AutoAddPolicy,
-                      BadHostKeyException, RSAKey, SSHClient, SSHException)
+                        BadHostKeyException, RSAKey, SSHClient, SSHException)
 
+from .tools import logger
 from .apt_module import apt
 from .copy_module import copy
 from .service_module import service
+from .sysctl_module import sysctl
 
-def ssh_conn(host, logger):
+def ssh_conn(host):
     """ Initiate SSH connexion with specified host.
 
     Args:
@@ -51,7 +53,7 @@ def ssh_conn(host, logger):
     return state, client
 
 
-def execution(host, todos, logger):
+def execution(host, todos):
     """ Launch todos execution on specified host.
 
     Args:
@@ -60,7 +62,7 @@ def execution(host, todos, logger):
         logger (Logger): The main created logger to log.
     """
     for _ in range(3):
-        state, client = ssh_conn(host, logger)
+        state, client = ssh_conn(host)
         if state:
             break
     else:
@@ -79,7 +81,9 @@ def execution(host, todos, logger):
                 status = apt(client, todo.params, host.ssh_password, host.ip, logger)
             case "service":
                 status = service(client, todo.params, host.ssh_password, host.ip, logger)
-            
+            case "sysctl":
+                status = sysctl(client, todo.params, host.ssh_password, host.ip)
+
         logger.info(f"Done todo {index}, module: {todo.module} on {host.ip}: {status.upper()}")
 
     client.close()

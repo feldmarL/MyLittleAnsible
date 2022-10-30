@@ -2,29 +2,14 @@
 Entry point of MyLittleAnsible project.
 """
 
-from logging import (DEBUG, ERROR, INFO, FileHandler, Formatter, StreamHandler,
-                     getLogger)
-from sys import stdout
+from logging import (DEBUG, INFO)
 
 from click import command, option
 
 from .module_execution.execute_todos import execution
 from .my_dataclasses.populate_dataclasses import populate_host, populate_todo
 
-formatter = Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-
-stderr_handler = FileHandler("stderr.log")
-stderr_handler.setLevel(ERROR)
-stderr_handler.setFormatter(formatter)
-
-stdout_handler = StreamHandler(stdout)
-stdout_handler.setLevel(DEBUG)
-stdout_handler.setFormatter(formatter)
-
-logger = getLogger(__name__)
-logger.setLevel(DEBUG)
-logger.addHandler(stderr_handler)
-logger.addHandler(stdout_handler)
+from .module_execution.tools import logger
 
 @command()
 @option("-f", "--todos_file_path", show_default=True, default="todos.yml", help="Todos file.")
@@ -56,4 +41,4 @@ def cmd_interpreter(todos_file_path, inventory, debug, dry_run):
     logger.info("Inventory file parsed.")
 
     for host in hosts:
-        execution(host, todos, logger)
+        execution(host, todos)

@@ -14,7 +14,13 @@
 #     name: "emacs-nox"
 #     state: present
 
-- module: service
+# - module: service
+#   params:
+#     name: docker
+#     state: enabled
+
+- module: sysctl
   params:
-    name: docker
-    state: enabled
+    attribute: "net.core.somaxconn"
+    value: 8192
+    permanent: true

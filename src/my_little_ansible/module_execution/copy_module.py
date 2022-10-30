@@ -52,8 +52,8 @@ def copy(client, params, logger):
 
     Args:
         client (SSHClient): Paramiko's SSH Client used to connect to host.
-        params (_type_): List of parameters about package defined in todos file.
-        logger (_type_): The main created logger to log.
+        params (list(String)): List of parameters about package defined in todos file.
+        logger (Logger): The main created logger to log.
 
     Returns:
         String: Execution state.

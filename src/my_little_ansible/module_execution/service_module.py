@@ -2,7 +2,7 @@
 Python module to execute service module defined in todos file.
 """
 
-from .tools import close_std
+from .tools import execute_command
 
 def set_variables(params):
     """ Set variable and return it based on params.
@@ -35,16 +35,13 @@ def check_execution(systemd, action, client, host_pwd):
         action (String): Action requested by user defined in todo params from todos file.
         client (SSHClient): Paramiko's SSH Client used to connect to host.
         host_pwd (String): User's password on remote host.
-        host_ip (int): Host ip.
-        logger (Logger): The main created logger to log.
 
     Returns:
         (bool, String): Execution state.
     """
-    stdin, stdout, stderr = client.exec_command(f'echo "{host_pwd}" | \
-                                            sudo -S systemctl is-active {systemd}')
-    execution_state = stdout.read().decode()[:-1]
-    close_std(stdin, stdout, stderr)
+    command = f"sudo -S systemctl is-active {systemd}"
+    _, stdout, _ = execute_command(True, client, host_pwd, command)
+    execution_state = stdout[:-1]
 
     match action:
         case "start":
@@ -54,10 +51,9 @@ def check_execution(systemd, action, client, host_pwd):
             if "inactive" == execution_state:
                 return True, execution_state
 
-    stdin, stdout, stderr = client.exec_command(f'echo "{host_pwd}" | \
-                                            sudo -S systemctl is-enabled {systemd}')
-    execution_state = stdout.read().decode()[:-1]
-    close_std(stdin, stdout, stderr)
+    command = f"sudo -S systemctl is-enabled {systemd}"
+    _, stdout, _ = execute_command(True, client, host_pwd, command)
+    execution_state = stdout[:-1]
 
     match action:
         case "enable":
@@ -73,18 +69,16 @@ def execute(systemd, action, client, host_pwd):
     """Execute action for systemd on host.
 
     Args:
-        systemd (_type_): _description_
-        action (_type_): _description_
-        client (_type_): _description_
-        host_pwd (_type_): _description_
+        systemd (String): Service's name.
+        action (String): Action to execute.
+        client (SSHClient): Paramiko's SSH Client used to connect to host.
+        host_pwd (String): User's password on remote host.
     """
-    stdin, stdout, stderr = client.exec_command(f'echo "{host_pwd}" | \
-                                            sudo -S systemctl {action} {systemd}')
+    command = f"sudo -S systemctl {action} {systemd}"
+    _, _, stderr = execute_command(True, client, host_pwd, command)
 
-    if "incorrect" in stderr.read().decode():
+    if "incorrect" in stderr:
         return False, "incorrect"
-
-    close_std(stdin, stdout, stderr)
 
     if action == "restart":
         action = "start"
@@ -94,11 +88,11 @@ def service(client, params, host_pwd, host_ip, logger):
     """ Service module entry point.
 
     Args:
-        client (SSHClient): _description_
-        params (list(String)): _description_
-        host_pwd (String): _description_
-        host_ip (int): _description_
-        logger (Logger): _description_
+        client (SSHClient): Paramiko's SSH Client used to connect to host.
+        params (list(String)): List of parameters about package defined in todos file.
+        host_pwd (String): User's password on remote host.
+        host_ip (int): Host ip on which execute action.
+        logger (Logger): The main created logger to log.
 
     Returns:
         String: Execution state.
