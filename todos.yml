@@ -1,8 +1,8 @@
-# - module: copy
-#   params:
-#     src: Vagrantfile
-#     dest: /home/mla/
-#     backup: true
+- module: copy
+  params:
+    src: ./src
+    dest: /home/mla/
+    backup: true
 
 # - module: apt
 #   params:
@@ -30,8 +30,8 @@
 #     value: 4096
 #     permanent: false
 
-- module: command
-  params:
-    command: |
-      echo "test" > /tmp/dummy-file
-      cat /tmp/dummy-file
+# - module: command
+#   params:
+#     command: |
+#       echo "test" > /tmp/dummy-file
+#       cat /tmp/dummy-file

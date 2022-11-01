@@ -3,9 +3,7 @@ Python module to execute copy module defined in todos file.
 """
 from os import listdir, path
 
-from paramiko import SFTPClient
-
-from .tools import execute_command, logger
+from .tools import logger
 
 def mkdir_p(sftp, remote_directory):
     """ Recursively generate directory if doesn't exist on remote host.
@@ -38,16 +36,21 @@ def put_dir(sftp, src, dest):
         src (String): Source of directory to send to remote host.
         dest (String): Destination on remote host where to send directory.
     """
+    _, dir_name = path.split(src)
     src_dir = listdir(src)
+
     for item in src_dir:
         item_path = path.join(src, item)
-        if path.isfile(item_path):
-            sftp.put(item_path, f"{dest}/{item}")
-        elif path.isdir(item_path):
-            mkdir_p(sftp, f"{dest}/{item}")
-            put_dir(sftp, item_path, dest)
 
-def copy(client, params, host_user, host_pwd):
+        if path.isfile(item_path):
+            logger.debug(f"put file {item_path} on {dest}/{item}\n")
+            sftp.put(item_path, f"{dest}/{item}", confirm=False)
+
+        elif path.isdir(item_path):
+            mkdir_p(sftp, f"{dest}/{dir_name}")
+            put_dir(sftp, item_path, f"{dest}/{dir_name}")
+
+def copy(client, params):
     """Copy module entry point.
 
     Args:
@@ -57,21 +60,19 @@ def copy(client, params, host_user, host_pwd):
     Returns:
         String: Execution state.
     """
-    src = params["src"]
+    src = path.abspath(params["src"]).rstrip('/')
     dest = params["dest"].rstrip('/')
+    _, item = path.split(src)
 
-    sftp = SFTPClient.from_transport(client.get_transport())
-    mkdir_p(sftp, dest)
-    command = f"sudo -S chown {host_user}:{host_user} -R {dest}"
-    _, _ = execute_command(True, client, command, host_pwd=host_pwd)
-
+    sftp = client.open_sftp()
 
     if path.isdir(src):
-        put_dir(sftp, src, dest)
-    elif path.isfile(src):
-        logger.debug(f"put {src} on {dest}")
-        sftp.put(src, dest)
+        mkdir_p(sftp, f"{dest}/{item}")
+        put_dir(sftp, src, f"{dest}/{item}")
 
-    logger.debug("I you're able to read this line, cry. Cry because you surely succeeded.")
+    elif path.isfile(src):
+        mkdir_p(sftp, dest)
+        logger.debug(f"put single file {src} on {dest}/{item}")
+        sftp.put(src, f"{dest}/{item}", confirm=False)
 
     return "changed"
