@@ -78,7 +78,7 @@ def apt(client, params, host_pwd, host_ip):
     logger.debug(f"While trying to {ACTION} {PACKAGE}, STDOUT:\n{stdout}")
 
     if stderr != "" and "dpkg-preconfigure: unable to re-open stdin:" not in stderr:
-        logger.error(f"While trying to {ACTION} {PACKAGE}, STDERR:\n{stderr}")
+        logger.error(f"While trying to {ACTION} {PACKAGE}, first 200 STDERR chars:\n{stderr[:200]}")
         return "ko"
 
     return "changed"

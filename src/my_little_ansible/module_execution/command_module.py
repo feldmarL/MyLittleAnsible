@@ -24,7 +24,7 @@ def command(client, params, host_ip):
         logger.debug(f"While executing {one_command} on {host_ip}, STDOUT:")
         logger.debug(f"{stdout}\n")
 
-        logger.debug(f"While executing {one_command} on {host_ip}, STDERR:")
-        logger.debug(f"{stderr}\n")
+        logger.debug(f"While executing {one_command} on {host_ip}, first 200 STDERR "
+                     f"chars:\n{stderr[:200]}")
 
     return "ok"
