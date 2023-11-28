@@ -9,11 +9,11 @@ class CustomFormatter(Formatter):
     """Logging colored formatter
     """
 
-    grey = "\x1b[38;20m"
-    yellow = "\x1b[33;20m"
-    red = "\x1b[31;20m"
-    blue = "\x1b[38;5;39m"
-    reset = "\x1b[0m"
+    grey: str = "\x1b[38;20m"
+    yellow: str = "\x1b[33;20m"
+    red: str = "\x1b[31;20m"
+    blue: str = "\x1b[38;5;39m"
+    reset: str = "\x1b[0m"
 
     def __init__(self, fmt):
         super().__init__()
