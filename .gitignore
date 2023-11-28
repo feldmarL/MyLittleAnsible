@@ -131,3 +131,6 @@ dmypy.json
 # todos.yml and inventory.yml as they are data files
 todos.yml
 inventory.yml
+
+# Vagrant stuff
+.vagrant
