@@ -43,7 +43,7 @@ def ssh_conn(host):
             client.connect(host.ip, host.port, host.ssh_user, pkey = key)
             state = True
     except BadHostKeyException:
-        logger.error("The server’s host key could not be verified.")
+        logger.error("The server's host key could not be verified.")
     except AuthenticationException:
         logger.error("Authentication failed.")
     except SSHException:
@@ -69,15 +69,14 @@ def execution(host, todos):
     else:
         logger.info(f"Could not connect to host {host.ip}, skipping todos execution.")
         logger.error(f"Failed to connect to {host.ip}, skipping todos execution.")
-        logger.error(f"Used password authentication: {host.auth}.")
-        logger.error(f"Used password authentication: {not host.auth}.")
+        logger.error(f"Used password authentication: {host.use_password_auth}.")
         return
 
 
     for index, todo in enumerate(todos):
         match todo.module:
             case "copy":
-                status = copy(client, todo.params, host.ssh_user, host.ssh_password)
+                status = copy(client, todo.params)
             case "apt":
                 status = apt(client, todo.params, host.ssh_password, host.ip)
             case "service":
