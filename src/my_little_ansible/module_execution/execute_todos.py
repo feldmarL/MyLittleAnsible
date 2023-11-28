@@ -34,7 +34,7 @@ def ssh_conn(host):
     state = False
 
     try:
-        if host.auth:
+        if host.use_password_auth:
             logger.debug("Trying to connect using password.\n")
             client.connect(host.ip, host.port, host.ssh_user, host.ssh_password)
             state = True

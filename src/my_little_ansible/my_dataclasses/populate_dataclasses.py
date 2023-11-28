@@ -7,7 +7,7 @@ from os import path
 
 from yaml import FullLoader, YAMLError, load
 
-from .data_classes import Host, Todo
+from .dataclasses import Host, Todo
 
 def populate_todo(todos_file_path, logger):
     """Populate todo from todos file.
@@ -44,7 +44,7 @@ def populate_host(inventory_file, logger):
     try:
         if path.isfile(inventory_file):
             with open(inventory_file, "r", encoding="utf-8") as file:
-                inventory = load(file, Loader=FullLoader)
+                inventory = load(file, Loader = FullLoader)
                 for host, params in inventory["hosts"].items():
                     current_host = Host(host, params["ssh_address"], params["ssh_port"])
                     logger.info(f"Target host: {host}")
@@ -56,7 +56,7 @@ def populate_host(inventory_file, logger):
                         setattr(current_host, "ssh_password", params["ssh_password"])
                     elif "ssh_key_file" in params:
                         setattr(current_host, "ssh_private_key_path", params["ssh_key_file"])
-                        setattr(current_host, "auth", False)
+                        setattr(current_host, "use_password_auth", False)
 
                     hosts.append(current_host)
         else:
