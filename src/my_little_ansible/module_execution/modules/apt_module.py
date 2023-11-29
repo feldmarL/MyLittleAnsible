@@ -47,12 +47,14 @@ def check_state(client, params, host_ip):
 
     if params["state"] == "install":
         if "ok installed" in stdout:
-            logger.info(f"{params['name']} already installed on {host_ip}. Todos DONE with status OK.")
+            logger.info(f"{params['name']} already installed on {host_ip}."
+                        " Todos DONE with status OK.")
             return "ok"
 
     elif params["state"] == "remove":
         if not "ok installed" in stdout:
-            logger.info(f"{params['name']} already uninstalled on {host_ip}. Todos DONE with status OK.")
+            logger.info(f"{params['name']} already uninstalled on {host_ip}."
+                        " Todos DONE with status OK.")
             return "ok"
 
     return "to change"
@@ -81,18 +83,19 @@ def apt(client, params, host_pwd, host_ip):
         return "ko"
 
     params = switch_state(params, False)
-    
+
     state = check_state(client, params, host_ip)
     if state == "ok":
         return state
 
-    command = (f'echo "{host_pwd}" | sudo -S apt-get -y {params["state"]} {params["name"]}')
+    command = f'echo "{host_pwd}" | sudo -S apt-get -y {params["state"]} {params["name"]}'
     stdout, stderr = execute_command(True, client, command, host_pwd=host_pwd)
 
     logger.debug(f"While trying to {params['state']} {params['name']}, STDOUT:\n{stdout}")
 
     if stderr != "" and "dpkg-preconfigure: unable to re-open stdin:" not in stderr:
-        logger.error(f"While trying to {params['state']} {params['name']}, first 200 STDERR chars:\n{stderr[:200]}")
+        logger.error(f"While trying to {params['state']} {params['name']},"
+                     " first 200 STDERR chars:\n{stderr[:200]}")
         params = switch_state(params, True)
         return "ko"
 

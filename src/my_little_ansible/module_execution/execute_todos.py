@@ -8,12 +8,12 @@ from socket import error as SocketError
 from paramiko import (AuthenticationException, AutoAddPolicy,
                         BadHostKeyException, RSAKey, SSHClient, SSHException)
 
-from .tools import logger
-from .apt_module import apt
-from .copy_module import copy
-from .service_module import service
-from .sysctl_module import sysctl
-from .command_module import command
+from .modules.tools import logger
+from .modules.apt_module import apt
+from .modules.copy_module import copy
+from .modules.service_module import service
+from .modules.sysctl_module import sysctl
+from .modules.command_module import command
 
 def ssh_conn(host):
     """ Initiate SSH connexion with specified host.

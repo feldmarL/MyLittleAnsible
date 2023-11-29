@@ -9,7 +9,7 @@ from click import command, option
 from .module_execution.execute_todos import execution
 from .my_dataclasses.populate_dataclasses import populate_host, populate_todo
 
-from .module_execution.tools import logger
+from .module_execution.modules.tools import logger
 
 @command()
 @option("-f", "--todos_file_path", show_default=True, default="todos.yml", help="Todos file.")

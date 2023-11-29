@@ -3,7 +3,7 @@ Tools used in multiple modules.
 """
 
 from sys import stdout
-from logging import (DEBUG, INFO, WARNING, ERROR, Formatter, StreamHandler, getLogger)
+from logging import DEBUG, INFO, WARNING, ERROR, Formatter, StreamHandler, getLogger
 
 class CustomFormatter(Formatter):
     """Logging colored formatter

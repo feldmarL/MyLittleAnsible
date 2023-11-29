@@ -1,2 +1,1 @@
-# Groupe de feldma_l 988759
-
+Small school project that mimics some aspects of Ansible.
