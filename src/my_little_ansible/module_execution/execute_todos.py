@@ -14,6 +14,7 @@ from .modules.copy_module import copy
 from .modules.service_module import service
 from .modules.sysctl_module import sysctl
 from .modules.command_module import command
+from .modules.template_module import template
 
 def ssh_conn(host):
     """ Initiate SSH connexion with specified host.
@@ -85,6 +86,8 @@ def execution(host, todos):
                 status = sysctl(client, todo.params, host.ssh_password, host.ip)
             case "command":
                 status = command(client, todo.params, host.ip)
+            case "template":
+                status = template(client, todo.params, host.ip)
             case _:
                 logger.error(f"Unrecognized module {todo.module}, skipping.")
                 return

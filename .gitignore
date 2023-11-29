@@ -128,9 +128,10 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# todos.yml and inventory.yml as they are data files
+# Tests datas files
 todos.yml
 inventory.yml
+default.conf.j2
 
 # Vagrant stuff
 .vagrant
