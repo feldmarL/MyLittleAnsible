@@ -4,6 +4,7 @@ Host and Todo which are dataclasses defined in data_classes.py.
 """
 
 from os import path
+from sys import exit
 
 from yaml import FullLoader, YAMLError, load
 
@@ -29,6 +30,7 @@ def populate_todo(todos_file_path, logger):
             logger.error("Can't acces todos file path.")
     except YAMLError:
         logger.error("Error occured while parsing yaml todos file.")
+        exit(1)
     return todos
 
 def populate_host(inventory_file, logger):
@@ -60,8 +62,10 @@ def populate_host(inventory_file, logger):
 
                     hosts.append(current_host)
         else:
-            logger.error("Inventory file does not exist, please provide an existing inventory file path.")
+            logger.error("Inventory file does not exist,"
+                         " please provide an existing inventory file path.")
             raise FileNotFoundError(inventory_file)
     except YAMLError:
         logger.error("Error occured while parsing yaml inventory file.")
+        exit(1)
     return hosts
