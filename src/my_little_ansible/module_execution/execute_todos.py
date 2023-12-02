@@ -77,7 +77,7 @@ def execution(host, todos):
     for index, todo in enumerate(todos):
         match todo.module:
             case "copy":
-                status = copy(client, todo.params)
+                status = copy(client, todo.params, host.ip)
             case "apt":
                 status = apt(client, todo.params, host.ssh_password, host.ip)
             case "service":

@@ -74,7 +74,7 @@ def execute(client, params, host_pwd, host_ip):
         client (SSHClient): Paramiko's SSH Client used to connect to host.
         params (list(String)): List of parameters about package defined in todos file.
         host_pwd (String): User's password on remote host.
-        host_ip (int): Host ip on which execute action.
+        host_ip (String): Host ip on which execute action.
     """
     if not (action := define_action(params['state'])):
         logger.info(f"Unkown service state or action asked. Were provided with {params['state']}."
@@ -103,7 +103,7 @@ def service(client, params, host_pwd, host_ip):
         client (SSHClient): Paramiko's SSH Client used to connect to host.
         params (list(String)): List of parameters about package defined in todos file.
         host_pwd (String): User's password on remote host.
-        host_ip (int): Host ip on which execute action.
+        host_ip (String): Host ip on which execute action.
 
     Returns:
         String: Execution state.

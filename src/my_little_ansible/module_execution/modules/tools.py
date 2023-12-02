@@ -3,6 +3,7 @@ Tools used in multiple modules.
 """
 
 from sys import stdout
+from os import path
 from logging import DEBUG, INFO, WARNING, ERROR, Formatter, StreamHandler, getLogger
 
 class CustomFormatter(Formatter):
@@ -17,12 +18,11 @@ class CustomFormatter(Formatter):
 
     def __init__(self, fmt):
         super().__init__()
-        self.fmt = fmt
         self.formats = {
-            DEBUG: self.blue + self.fmt + self.reset,
-            INFO: self.grey + self.fmt + self.reset,
-            WARNING: self.yellow + self.fmt + self.reset,
-            ERROR: self.red + self.fmt + self.reset,
+            DEBUG: self.blue + fmt + self.reset,
+            INFO: self.grey + fmt + self.reset,
+            WARNING: self.yellow + fmt + self.reset,
+            ERROR: self.red + fmt + self.reset,
         }
 
     def format(self, record):
@@ -67,6 +67,49 @@ def close_std(stdin, stdout_channel, stderr):
     stdin.close()
     stdout_channel.close()
     stderr.close()
+
+def mkpath(sftp, remote_directory):
+    """ Recursively generate directory if doesn't exist on remote host.
+
+    Args:
+        sftp (SFTPClient): Paramiko's SFTPClient.
+        remote_directory (string): Path to remote directory to generate.
+
+    Returns:
+    """
+    if remote_directory == '/':
+        sftp.chdir('/')
+        return
+
+    if remote_directory == '':
+        return
+
+    try:
+        sftp.chdir(remote_directory)
+    except IOError:
+        dirname, basename = path.split(remote_directory.rstrip('/'))
+        mkpath(sftp, dirname)
+        sftp.mkdir(basename)
+        sftp.chdir(basename)
+
+def backup(sftp, dest, host_ip):
+    """Backup remote file to /tmp folder.
+
+    Args:
+        sftp (SFTPClient): Paramiko's SFTPClient.
+        dest (String): Remote file to backup.
+        host_ip (String): Host ip.
+    """
+    try:
+        tmp_dest = f"/tmp{'/'.join(dest.split('/')[:-1])}/"
+        mkpath(sftp, tmp_dest)
+        sftp.rename(dest, f"{tmp_dest}{dest.split('/')[-1]}")
+        logger.info(f"Backup of {dest} on {host_ip} done. "
+                    f"Backuped file can be found at {tmp_dest}")
+        return True
+    except FileNotFoundError:
+        logger.debug("Remote file does not exist, skipped backuping.")
+        return False
 
 logger = getLogger(__name__)
 logger.setLevel(DEBUG)

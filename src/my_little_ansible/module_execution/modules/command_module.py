@@ -8,9 +8,9 @@ def command(client, params, host_ip):
     """Execute command on remote host.
 
     Args:
-        client (_type_): _description_
-        params (_type_): _description_
-        host_ip (_type_): _description_
+        client (SSHClient): Paramiko's SSH Client used to connect to host.
+        params (list(String)): List of todo's params extracted from todos file.
+        host_ip (String): Host ip.
     """
     commands = params["command"]
 

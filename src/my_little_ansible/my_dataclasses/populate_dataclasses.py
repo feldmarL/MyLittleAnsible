@@ -23,7 +23,7 @@ def populate_todo(todos_file_path, logger):
     try:
         if path.isfile(todos_file_path):
             with open(todos_file_path, "r", encoding="utf-8") as todos_file:
-                todos_file = load(todos_file, Loader=FullLoader)
+                todos_file = load(todos_file, Loader = FullLoader)
                 for todo in todos_file:
                     todos.append(Todo(todo["module"], todo["params"]))
         else:

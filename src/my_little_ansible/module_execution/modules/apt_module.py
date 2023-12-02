@@ -35,7 +35,7 @@ def check_state(client, params, host_ip):
     Args:
         params (list(String)): List of parameters about package defined in todos file.
         client (SSHClient): Paramiko's SSH Client used to connect to host.
-        host_ip (int): Host ip.
+        host_ip (String): Host ip.
 
     Returns:
         state (String): Execution state, action to do and package on which action to do.
@@ -66,7 +66,7 @@ def apt(client, params, host_pwd, host_ip):
         client (SSHClient): Paramiko's SSH Client used to connect to host.
         params (list(String)): List of todo's params extracted from todos file.
         host_pwd (String): User's password on remote host.
-        host_ip (int): Host ip.
+        host_ip (String): Host ip.
         logger (Logger): The main created logger to log.
 
     Returns:
