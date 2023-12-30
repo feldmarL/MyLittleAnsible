@@ -134,4 +134,5 @@ inventory.yml
 default.conf.j2
 
 # Vagrant stuff
+Vagrantfile
 .vagrant
