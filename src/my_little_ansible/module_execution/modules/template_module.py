@@ -30,7 +30,7 @@ def render_template(template_path, variables):
     logger.info("Template not found in source directory with specified name.")
     logger.error("Template not found in source directory with specified name.")
 
-def template(client, params, host_ip):
+def template(client, params, host_ip, _):
     """Render template on remote host.
 
     Args:

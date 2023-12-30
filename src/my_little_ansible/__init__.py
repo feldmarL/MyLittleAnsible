@@ -40,5 +40,4 @@ def cmd_interpreter(todos_file_path, inventory, debug, dry_run):
     hosts = populate_host(inventory, logger)
     logger.info("Hosts inventory file parsed.\n")
 
-    for host in hosts:
-        execution(host, todos)
+    execution(todos, hosts)

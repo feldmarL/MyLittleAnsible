@@ -83,7 +83,7 @@ def execute_change(client):
     state, effective_value = check_execution_np(client)
     return state, effective_value
 
-def sysctl(client, params, host_pwd, host_ip):
+def sysctl(client, params, host_ip, host_pwd):
     """ Sysctl module entry point.
 
     Args:

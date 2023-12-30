@@ -4,7 +4,7 @@ Python module to execute command module defined in todos file.
 
 from .tools import execute_command, logger
 
-def command(client, params, host_ip):
+def command(client, params, host_ip, _):
     """Execute command on remote host.
 
     Args:

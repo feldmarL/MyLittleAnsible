@@ -54,8 +54,7 @@ def ssh_conn(host):
 
     return state, client
 
-
-def execution(host, todos):
+def select_todo(todo):
     """ Launch todos execution on specified host.
 
     Args:
@@ -63,35 +62,62 @@ def execution(host, todos):
         todos (list(Todo)): The list of todos to execute on host.
         logger (Logger): The main created logger to log.
     """
-    for _ in range(3):
-        state, client = ssh_conn(host)
-        if state:
-            break
-    else:
-        logger.info(f"Could not connect to host {host.ip}, skipping todos execution.")
-        logger.error(f"Failed to connect to {host.ip}, skipping todos execution.")
-        logger.error(f"Used password authentication: {host.use_password_auth}.")
-        return
+    match todo.module:
+        case "copy":
+            return copy
+        case "apt":
+            return apt
+        case "service":
+            return service
+        case "sysctl":
+            return sysctl
+        case "command":
+            return command
+        case "template":
+            return template
+        case _:
+            logger.error(f"Unrecognized module {todo.module}, skipping.")
+            return
 
+def map_host_to_client(hosts):
+    """Create an SSH connection to every hosts an return the SSH client
+    and hosts infos mapped in a tuple.
+
+    Args:
+        hosts (list(Host)): List of hosts.
+
+    Returns:
+        list(tuple(Host, SSHClient)): List of every SSH client and hosts infos mapped in tuples.
+    """
+    host_to_client = []
+
+    for host in hosts:
+        for _ in range(3):
+            state, client = ssh_conn(host)
+            if state:
+                host_to_client.append((host, client))
+                break
+        else:
+            logger.info(f"Could not connect to host {host.ip}, skipping todos execution.")
+            logger.error(f"Failed to connect to {host.ip}, skipping todos execution.")
+            logger.error(f"Used {'password' if host.use_password_auth else 'ssh key'}"
+                         " authentication.")
+            return
+
+    return host_to_client
+
+def execution(todos, hosts):
+    """Todo execution entrypoint.
+
+    Args:
+        todos (list(Todo)): List of todos.
+        hosts (list(Host)): List of hosts.
+    """
+    host_to_client = map_host_to_client(hosts)
 
     for index, todo in enumerate(todos):
-        match todo.module:
-            case "copy":
-                status = copy(client, todo.params, host.ip)
-            case "apt":
-                status = apt(client, todo.params, host.ssh_password, host.ip)
-            case "service":
-                status = service(client, todo.params, host.ssh_password, host.ip)
-            case "sysctl":
-                status = sysctl(client, todo.params, host.ssh_password, host.ip)
-            case "command":
-                status = command(client, todo.params, host.ip)
-            case "template":
-                status = template(client, todo.params, host.ip)
-            case _:
-                logger.error(f"Unrecognized module {todo.module}, skipping.")
-                return
-
-        logger.info(f"Done todo {index}, module: {todo.module} on {host.ip}: {status.upper()}\n")
-
-    client.close()
+        todo_function = select_todo(todo)
+        for host, client in host_to_client:
+            status = todo_function(client, todo.params, host.ip, host.ssh_password)
+            logger.info(f"Done todo [{index}], module: {todo.module} on {host.ip}:"
+                        f" {status.upper()}\n")

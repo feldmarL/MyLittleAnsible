@@ -96,7 +96,7 @@ def execute(client, params, host_pwd, host_ip):
 
     return check_execution(client, params, host_pwd)
 
-def service(client, params, host_pwd, host_ip):
+def service(client, params, host_ip, host_pwd):
     """ Service module entry point.
 
     Args:

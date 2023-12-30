@@ -59,7 +59,7 @@ def check_state(client, params, host_ip):
 
     return "to change"
 
-def apt(client, params, host_pwd, host_ip):
+def apt(client, params, host_ip, host_pwd):
     """ Module's entry point.
 
     Args:

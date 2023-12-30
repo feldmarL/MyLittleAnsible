@@ -28,7 +28,7 @@ def put_dir(sftp, src, dest):
             sftp.put(item_path, f"{dest}/{item}", confirm = False)
 
 
-def copy(client, params, host_ip):
+def copy(client, params, host_ip, _):
     """Copy module entry point.
 
     Args:
