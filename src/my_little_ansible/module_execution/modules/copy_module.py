@@ -24,7 +24,7 @@ def put_dir(sftp, src, dest):
             put_dir(sftp, item_path, f"{dest}/{dir_name}")
 
         else:
-            logger.debug(f"Pushing file {item_path} to {dest}/{item}\n")
+            logger.debug("Pushing file %s to %s/%s\n", item_path, dest, item)
             sftp.put(item_path, f"{dest}/{item}", confirm = False)
 
 
@@ -58,7 +58,7 @@ def copy(client, params, host_ip, _):
 
         else:
             mkpath(sftp, dest)
-            logger.debug(f"put single file {src} on {dest}/{item}")
+            logger.debug("Put single file %s on %s/%s", src, dest, item)
             sftp.put(src, f"{dest}/{item}", confirm = False)
 
     except IOError:

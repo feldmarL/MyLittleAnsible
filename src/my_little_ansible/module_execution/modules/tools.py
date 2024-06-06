@@ -44,10 +44,10 @@ def execute_command(sudo, client, command, host_pwd=""):
     """
     if sudo:
         stdin, stdout_channel, stderr = client.exec_command(f'echo "{host_pwd}" | {command}')
-        logger.debug(f'Execute command "{command}" WITH sudo.\n')
+        logger.debug('Execute command "%s" WITH sudo.\n', command)
     else:
-        stdin, stdout_channel, stderr = client.exec_command(f'{command}')
-        logger.debug(f'Execute command "{command}" WITHOUT sudo.\n')
+        stdin, stdout_channel, stderr = client.exec_command(command)
+        logger.debug('Execute command "%s" WITHOUT sudo.\n', command)
 
     stdout_str = stdout_channel.read().decode()
     stderr_str = stderr.read().decode()
@@ -104,8 +104,8 @@ def backup(sftp, dest, host_ip):
         tmp_dest = f"/tmp{'/'.join(dest.split('/')[:-1])}/"
         mkpath(sftp, tmp_dest)
         sftp.rename(dest, f"{tmp_dest}{dest.split('/')[-1]}")
-        logger.info(f"Backup of {dest} on {host_ip} done. "
-                    f"Backuped file can be found at {tmp_dest}")
+        logger.info("Backup of %s on %s done. Backuped file can be found at %s",
+                    {dest}, {host_ip}, {tmp_dest})
         return True
     except FileNotFoundError:
         logger.debug("Remote file does not exist, skipped backuping.")

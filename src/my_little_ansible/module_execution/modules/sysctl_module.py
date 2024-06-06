@@ -100,13 +100,14 @@ def sysctl(client, params, host_ip, host_pwd):
     if not PERMANENT:
         state, effective_value = check_execution_np(client)
         if not state:
-            logger.debug(f"Not yet {ATTRIBUTE}={VALUE} on {host_ip}, current: {effective_value}")
+            logger.debug("Not yet %s=%s on %s, current: %s",
+                         ATTRIBUTE, VALUE, host_ip, effective_value)
     else:
         state, effective_value, file_value = check_execution_p(client)
         if not state:
-            logger.debug(f"{ATTRIBUTE}={VALUE} not applied permanently yet on {host_ip}. "
-                         f"Currently effective: {effective_value}. "
-                         f"Currently defined in /etc/sysctl.conf file: {file_value}")
+            logger.debug("%s=%s not applied permanently yet on %s. "
+                         "Currently effective: %s. Currently defined in /etc/sysctl.conf file: %s",
+                         ATTRIBUTE, VALUE, host_ip, effective_value, file_value)
     if state:
         return "ok"
 
@@ -115,6 +116,6 @@ def sysctl(client, params, host_ip, host_pwd):
     if state:
         return "changed"
 
-    logger.debug(f"{ATTRIBUTE}={VALUE} FAILED on {host_ip}, current: {effective_value}")
+    logger.debug("%s=%s FAILED on %s, current: %s", ATTRIBUTE, VALUE, host_ip, effective_value)
 
     return "ko"

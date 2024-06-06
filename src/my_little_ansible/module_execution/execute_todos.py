@@ -26,7 +26,7 @@ def ssh_conn(host):
         SSHClient: The SSH client we need to use to send commands to distant host.
     """
     key_path = path.abspath(host.ssh_private_key_path)
-    logger.info(f"key_path: {key_path}\n")
+    logger.info("key_path: %s\n", key_path)
     if path.isfile(key_path):
         key = RSAKey.from_private_key_file(key_path)
     client = SSHClient()
@@ -76,8 +76,8 @@ def select_todo(todo):
         case "template":
             return template
         case _:
-            logger.error(f"Unrecognized module {todo.module}, skipping.")
-            return
+            logger.error("Unrecognized module %s, skipping.", todo.module)
+            return None
 
 def map_host_to_client(hosts):
     """Create an SSH connection to every hosts an return the SSH client
@@ -98,11 +98,10 @@ def map_host_to_client(hosts):
                 host_to_client.append((host, client))
                 break
         else:
-            logger.info(f"Could not connect to host {host.ip}, skipping todos execution.")
-            logger.error(f"Failed to connect to {host.ip}, skipping todos execution.")
-            logger.error(f"Used {'password' if host.use_password_auth else 'ssh key'}"
-                         " authentication.")
-            return
+            logger.info("Could not connect to host %s, skipping todos execution.")
+            logger.error("Failed to connect to %s, skipping todos execution.", host.ip)
+            logger.error("Used %s authentication.",
+                         "password" if host.use_password_auth else "ssh key")
 
     return host_to_client
 
@@ -117,7 +116,9 @@ def execution(todos, hosts):
 
     for index, todo in enumerate(todos):
         todo_function = select_todo(todo)
+        if todo_function is None:
+            continue
         for host, client in host_to_client:
             status = todo_function(client, todo.params, host.ip, host.ssh_password)
-            logger.info(f"Done todo [{index}], module: {todo.module} on {host.ip}:"
-                        f" {status.upper()}\n")
+            logger.info("Done todo [%i], module: %s on %s: %s\n",
+                        index, todo.module, host.ip, status.upper())

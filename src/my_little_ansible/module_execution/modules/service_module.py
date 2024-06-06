@@ -13,19 +13,11 @@ def define_action(state):
     Returns:
         action (String): String of litteral action to execute. False if unknown.
     """
-    match state:
-        case "started":
-            return "start"
-        case "restarted":
-            return "restart"
-        case "stopped":
-            return "stop"
-        case "enabled":
-            return "enable"
-        case "disabled":
-            return "disable"
-        case _:
-            return False
+    return {"started": "start",
+            "restarted": "restart",
+            "stopped": "stop",
+            "enabled": "enable",
+            "disabled": "disable"}.get(state, False)
 
 def check_execution(client, params, host_pwd):
     """Check module execution for idempotence and end execution verification.
@@ -77,21 +69,21 @@ def execute(client, params, host_pwd, host_ip):
         host_ip (String): Host ip on which execute action.
     """
     if not (action := define_action(params['state'])):
-        logger.info(f"Unkown service state or action asked. Were provided with {params['state']}."
-                    " Known and defined state and action are: "
-                    "started, restarted, stopped, enabled and disabled")
-        logger.error(f"Unkown service state or action asked. Were provided with {params['state']}."
-                    " Known and defined state and action are: "
-                    "started, restarted, stopped, enabled and disabled")
+        logger.info("Unkown service state or action asked. Were provided with %s. "
+                    "Known and defined state and action are: "
+                    "started, restarted, stopped, enabled and disabled", params['state'])
+        logger.error("Unkown service state or action asked. Were provided with %s. "
+                     "Known and defined state and action are: "
+                     "started, restarted, stopped, enabled and disabled", params['state'])
         return False, "unknown action"
     command = f"sudo -S systemctl {action} {params['name']}"
     _, stderr = execute_command(True, client, command, host_pwd)
 
     if "incorrect" in stderr:
-        logger.info(f"Incorrect password provided in inventory file for {host_ip}. "
-            f"service module can't be executed without sudo password.")
-        logger.error(f"No password were provided in inventory file for {host_ip}. "
-                     f"service module can't be executed without sudo password.")
+        logger.info("Incorrect password provided in inventory file for %s. "
+                    "service module can't be executed without sudo password.", host_ip)
+        logger.error("No password were provided in inventory file for %s. "
+                     "service module can't be executed without sudo password.", host_ip)
         return False, "incorrect"
 
     return check_execution(client, params, host_pwd)
@@ -113,7 +105,7 @@ def service(client, params, host_ip, host_pwd):
         state, execution_state = check_execution(client, params, host_pwd)
 
     if "failed" in execution_state:
-        logger.debug(f"{params['name']} initial state on {host_ip} is FAILED.")
+        logger.debug("%s initial state on %s is FAILED.", params['name'], host_ip)
 
     if state:
         return "ok"
@@ -121,10 +113,10 @@ def service(client, params, host_ip, host_pwd):
     execution, execution_state = execute(client, params, host_pwd, host_ip)
 
     if not execution and execution_state not in ["incorrect", "unknown"]:
-        logger.info(f"A problem occured when executing {params['state']} for {params['name']} "
-                    f"on {host_ip}. Current state is {execution_state}")
-        logger.error(f"A problem occured when executing {params['state']} for {params['name']} "
-                     f"on {host_ip}. Current state is {execution_state}")
+        logger.info("A problem occured when executing {params['state']} for {params['name']} "
+                    "on %s. Current state is %s", host_ip, execution_state)
+        logger.error("A problem occured when executing {params['state']} for {params['name']} "
+                    "on %s. Current state is %s", host_ip, execution_state)
         return "ko"
 
     return "changed"

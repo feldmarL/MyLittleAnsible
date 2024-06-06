@@ -16,17 +16,9 @@ def switch_state(params, original):
         params (list(String)): List of parameters about package defined in todos file.
     """
     if not original:
-        if params["state"] == "present":
-            params["state"] = "install"
-        elif params["state"] == "absent":
-            params["state"] = "remove"
-
-    if original:
-        if params["state"] == "install":
-            params["state"] = "present"
-        elif params["state"] == "remove":
-            params["state"] = "absent"
-
+        params["state"] = {"present": "install", "absent": "remove"}[params["state"]]
+    else:
+        params["state"] = {"install": "present", "remove": "absent"}[params["state"]]
     return params
 
 def check_state(client, params, host_ip):
@@ -43,18 +35,18 @@ def check_state(client, params, host_ip):
     command = f'dpkg -s {params["name"]} | grep "Status"'
     stdout, _ = execute_command(False, client, command)
 
-    logger.debug(f"{params['name']} state on {host_ip}: {stdout}")
+    logger.debug("%s state on %s: %s", params['name'], host_ip, stdout)
 
     if params["state"] == "install":
         if "ok installed" in stdout:
-            logger.info(f"{params['name']} already installed on {host_ip}."
-                        " Todos DONE with status OK.")
+            logger.info("%s already installed on %s. Todos DONE with status OK.",
+                        params['name'], host_ip)
             return "ok"
 
     elif params["state"] == "remove":
         if not "ok installed" in stdout:
-            logger.info(f"{params['name']} already uninstalled on {host_ip}."
-                        " Todos DONE with status OK.")
+            logger.info("%s already absent from %s. Todos DONE with status OK.",
+                        params['name'], host_ip)
             return "ok"
 
     return "to change"
@@ -76,10 +68,10 @@ def apt(client, params, host_ip, host_pwd):
     _, stderr = execute_command(True, client, command, host_pwd=host_pwd)
 
     if "incorrect" in stderr:
-        logger.warning(f"Incorrect password provided in inventory file for {host_ip}. "
-                    f"apt module can't be executed without sudo password.")
-        logger.error(f"No password were provided in inventory file for {host_ip}. "
-                     f"apt module can't be executed without sudo password.")
+        logger.warning("Incorrect password provided in inventory file for %s. "
+                       "apt module can't be executed without sudo password.", host_ip)
+        logger.error("No password were provided in inventory file for %s. "
+                     "apt module can't be executed without sudo password.", host_ip)
         return "ko"
 
     params = switch_state(params, False)
@@ -91,11 +83,11 @@ def apt(client, params, host_ip, host_pwd):
     command = f'echo "{host_pwd}" | sudo -S apt-get -y {params["state"]} {params["name"]}'
     stdout, stderr = execute_command(True, client, command, host_pwd=host_pwd)
 
-    logger.debug(f"While trying to {params['state']} {params['name']}, STDOUT:\n{stdout}")
+    logger.debug("While trying to %s %s, STDOUT:\n%s", params['state'], params['name'], stdout)
 
     if stderr != "" and "dpkg-preconfigure: unable to re-open stdin:" not in stderr:
-        logger.error(f"While trying to {params['state']} {params['name']},"
-                     " first 200 STDERR chars:\n{stderr[:200]}")
+        logger.error("While trying to %s %s, first 200 STDERR chars:\n%s",
+                     params['state'], params['name'], stderr[:200])
         params = switch_state(params, True)
         return "ko"
 

@@ -30,6 +30,8 @@ def render_template(template_path, variables):
     logger.info("Template not found in source directory with specified name.")
     logger.error("Template not found in source directory with specified name.")
 
+    return None
+
 def template(client, params, host_ip, _):
     """Render template on remote host.
 
@@ -43,6 +45,9 @@ def template(client, params, host_ip, _):
     """
 
     rendered_template = render_template(params["src"], params["vars"])
+
+    if rendered_template is None:
+        return "ko"
 
     sftp = client.open_sftp()
 
